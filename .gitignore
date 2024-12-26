@@ -1,0 +1,25 @@
+#Django
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+db.sqlite3
+media/
+.venv
+/migrations/
+
+# React
+node_modules/
+build/
+npm-debug.log*
+.venv
+
+# System Files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.log
+*.swp
+shop_app/migrations/
+core/migrations/
