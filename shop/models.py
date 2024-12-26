@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.text import slugify
 
 # Create your models here.
 class Category(models.Model):
@@ -18,8 +19,8 @@ class Category(models.Model):
     slug = models.SlugField(unique=True, max_length=100)
     description = models.TextField(blank=True, null=True)
     image = models.ImageField(upload_to='category_images/', blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    # created_at = models.DateTimeField(auto_now_add=True)
+    # updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         """Returns a string representation of the Category instance.
@@ -31,6 +32,24 @@ class Category(models.Model):
             str: The name of the category.
         """
         return self.name
+    
+    class Meta:
+        """
+        Meta options for the Category Model
+        
+        Attributes:
+            ordering (list): Orders categories by their name.
+            indexes (list): Adds an index for the name field to improve
+                            query performance.
+            verbose_name (str): A human-readable name for the model.
+            verbose_name_plural (str): The plural form of the model name.
+        """
+        ordering = ['name']
+        indexes = [
+            models.Index(fields=['name']),
+        ]
+        verbose_name = 'category'
+        verbose_name_plural = 'categories'
 
 
 class Products(models.Model):
@@ -54,11 +73,31 @@ class Products(models.Model):
         Category, related_name='products', on_delete=models.CASCADE
     )
     name = models.CharField(max_length=200)
-    slug = models.SlugField(max_length=200)
+    slug = models.SlugField(max_length=200, unique=True)
     description = models.TextField(null=True, blank=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     # stock_quantity = models.IntegerField()
-    image = models.ImageField(upload_to='img/')
+    image = models.ImageField(
+        upload_to='products/%Y/%M/%d', blank=True
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        """
+        Meta options for the Product model.
+
+        Attributes:
+            ordering (list): Orders products by their name.
+            indexes (list): Adds indexes for faster querying on specific fields.
+        """
+        ordering = ['name']
+        indexes = [
+            models.Index(fields=['id', 'slug']),
+            models.Index(fields=['name']),
+            models.Index(fields=['-created_at']),
+        ]
+
 
     def __str__(self):
         """
@@ -71,3 +110,24 @@ class Products(models.Model):
             str: The name of the product.
         """
         return self.name
+    
+    def save(self, **kwargs):
+        """
+        Custom save method to ensure the slug field is unique for each product
+        If a slug isn't provided, one is generated from the product name.
+        """
+        if not self.slug:
+            base_slug = slugify(self.name)
+        else:
+            # To ensure the slug is really 'slugged' ;)
+            base_slug = slugify(self.slug)
+        
+        slug = base_slug
+        counter = 1
+        while Products.objects.filter(slug=slug).exists():
+            slug = f'{base_slug}-{counter}'
+            counter += 1
+        
+        self.slug = slug
+        
+        super().save(**kwargs)
