@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'core',
     'shop',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
@@ -127,3 +128,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # MY SETTINGS
 AUTH_USER_MODEL = 'core.CustomUser'
+MEDIA_URL = 'media/'
+MEDIA_ROOT = BASE_DIR / 'media'
