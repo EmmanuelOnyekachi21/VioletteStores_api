@@ -52,7 +52,7 @@ class Category(models.Model):
         verbose_name_plural = 'categories'
 
 
-class Products(models.Model):
+class Product(models.Model):
     """Represents a product within a specific category.
 
     Each product is linked to a category and has a:
@@ -124,7 +124,7 @@ class Products(models.Model):
         
         slug = base_slug
         counter = 1
-        while Products.objects.filter(slug=slug).exists():
+        while Product.objects.filter(slug=slug).exists():
             slug = f'{base_slug}-{counter}'
             counter += 1
         
