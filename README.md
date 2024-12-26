@@ -19,23 +19,29 @@ This repository contains the backend for an e-commerce website built using Djang
 ## Setup Instructions  
 1. **Clone the repository**
     ```bash
-    git clone git@github.com:EmmanuelOnyekachi21/django-ecommerce.git
+    git clone git@github.com:EmmanuelOnyekachi21/VioletteStores_api.git
     ```
 2. **Backend Setup**
     - Navigate to the Backend folder
+    ```bash
+    cd VioletteStores_api
+    ```
     - Create a virtual environment: ```python -m venv .venv```
     - Activate the environment:
         - On windows: ```.venv\Scripts\activate```
         - On Mac/Linux: ```source .venv/bin/activate```
         - Install dependencies: ```pip install -r requirements.txt```.
-3. **Frontend Setup**
-    - Navigate to the frontend folder
-    - Install dependencies: ```npm install```.
-4. **Run the application**
-    - Start the backend server: ```python manage.py runserver```.
+3. **Run databse migrations**
+    ```bash
+    python manage.py migrate
+4.**Start the development server.**
+    ```bash
+    python manage.py runserver
+    ```
 
+#### The API will be available at http://127.0.0.1:8000/.
 ## API DOCUMENTATION
 (To be added later after API development.)
 
 ## CHATGPT NOTES
-[Click here](https://chatgpt.com/c/673f21df-add8-8005-9056-e28988245dcd)
+[Click here](https://chatgpt.com/c/676d310a-250c-8005-8c5a-1b118aa8a77b)
