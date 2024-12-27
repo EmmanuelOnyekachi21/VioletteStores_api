@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils.text import slugify
+from django.utils import timezone
 
 # Create your models here.
 class Category(models.Model):
@@ -19,8 +20,11 @@ class Category(models.Model):
     slug = models.SlugField(unique=True, max_length=100)
     description = models.TextField(blank=True, null=True)
     image = models.ImageField(upload_to='category_images/', blank=True, null=True)
-    # created_at = models.DateTimeField(auto_now_add=True)
-    # updated_at = models.DateTimeField(auto_now=True)
+    parent = models.ForeignKey(
+        'self', related_name='subcategory', on_delete=models.CASCADE,
+        null=True, blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
         """Returns a string representation of the Category instance.
