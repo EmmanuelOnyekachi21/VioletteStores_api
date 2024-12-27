@@ -20,9 +20,9 @@ class Category(models.Model):
     slug = models.SlugField(unique=True, max_length=100)
     description = models.TextField(blank=True, null=True)
     image = models.ImageField(upload_to='category_images/', blank=True, null=True)
-    parent = models.ForeignKey(
-        'self', related_name='subcategory', on_delete=models.CASCADE,
-        null=True, blank=True)
+    # parent = models.ForeignKey(
+    #     'self', related_name='subcategory', on_delete=models.CASCADE,
+    #     null=True, blank=True)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(default=timezone.now)
 
