@@ -107,3 +107,30 @@ def add_item(request):
     except Exception as e:
         # Return an error response in case of an exception
         return Response(str(e), status=400)
+
+
+def product_in_cart(request):
+    """
+    Check if a product already exists in the cart.
+    Takes cart_code and product_id from query parameters.
+    Returns a response with product_exist: true or false.
+    """
+    product_id = request.query_params.get('product_id')
+    cart_code = request.query_params.get('cart_code')
+
+    try:
+        cart = get_object_or_404(Cart, cart_code=cart_code)
+        product = get_object_or_404(Product, id=product_id)
+        
+        # Check if the product exists in the cart
+        cart_item = CartItem.objects.filter(
+            cart=cart, product=product
+        ).exists()
+
+        return Response(
+            {
+                'product_exists': cart_item
+            }
+        )
+    except Exception as e:
+        return Response(str(e))
