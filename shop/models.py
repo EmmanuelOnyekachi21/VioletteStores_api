@@ -17,7 +17,7 @@ class Category(models.Model):
         updated_at (datetime): Timestamp of the last update to the category.
     """
     name = models.CharField(max_length=100)
-    slug = models.SlugField(unique=True, max_length=100)
+    slug = models.SlugField(max_length=100)
     description = models.TextField(blank=True, null=True)
     image = models.ImageField(upload_to='category_images/', blank=True, null=True)
     # parent = models.ForeignKey(
@@ -54,6 +54,27 @@ class Category(models.Model):
         ]
         verbose_name = 'category'
         verbose_name_plural = 'categories'
+
+    def save(self, **kwargs):
+        """
+        Custom save method to ensure the slug field is unique for each product
+        If a slug isn't provided, one is generated from the product name.
+        """
+        if not self.slug:
+            base_slug = slugify(self.name)
+        else:
+            # To ensure the slug is really 'slugged' ;)
+            base_slug = slugify(self.slug)
+        
+        slug = base_slug
+        counter = 1
+        while Product.objects.filter(slug=slug).exists():
+            slug = f'{base_slug}-{counter}'
+            counter += 1
+        
+        self.slug = slug
+        
+        super().save(**kwargs)
 
 
 class Product(models.Model):
