@@ -1,13 +1,14 @@
+from django.conf import settings
 from django.db import models
 from django.utils.text import slugify
 from django.utils import timezone
 
-# Create your models here.
+
 class Category(models.Model):
     """
     Represents a product category in the system.
     Each category can contain multiple products.
-    
+
     Attributes:
         name (str): The name of the category.
         slug (str): A unique URL-friendly identifier for the category.
@@ -19,7 +20,11 @@ class Category(models.Model):
     name = models.CharField(max_length=100)
     slug = models.SlugField(max_length=100)
     description = models.TextField(blank=True, null=True)
-    image = models.ImageField(upload_to='category_images/', blank=True, null=True)
+    image = models.ImageField(
+        upload_to='category_images/',
+        blank=True,
+        null=True
+    )
     # parent = models.ForeignKey(
     #     'self', related_name='subcategory', on_delete=models.CASCADE,
     #     null=True, blank=True)
@@ -36,11 +41,11 @@ class Category(models.Model):
             str: The name of the category.
         """
         return self.name
-    
+
     class Meta:
         """
         Meta options for the Category Model
-        
+
         Attributes:
             ordering (list): Orders categories by their name.
             indexes (list): Adds an index for the name field to improve
@@ -65,15 +70,15 @@ class Category(models.Model):
         else:
             # To ensure the slug is really 'slugged' ;)
             base_slug = slugify(self.slug)
-        
+
         slug = base_slug
         counter = 1
         while Product.objects.filter(slug=slug).exists():
             slug = f'{base_slug}-{counter}'
             counter += 1
-        
+
         self.slug = slug
-        
+
         super().save(**kwargs)
 
 
@@ -107,14 +112,14 @@ class Product(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
         """
         Meta options for the Product model.
 
         Attributes:
             ordering (list): Orders products by their name.
-            indexes (list): Adds indexes for faster querying on specific fields.
+            indexes (list): Adds indexes for faster querying specific fields
         """
         ordering = ['name']
         indexes = [
@@ -123,19 +128,19 @@ class Product(models.Model):
             models.Index(fields=['-created_at']),
         ]
 
-
     def __str__(self):
         """
         Returns a string representation of the Product instance.
 
-        The string is the name of the product, which helps in displaying the product
+        The string is the name of the product,
+        which helps in displaying the product
         in various views like admin, templates, or logs.
 
         Returns:
             str: The name of the product.
         """
         return self.name
-    
+
     def save(self, **kwargs):
         """
         Custom save method to ensure the slug field is unique for each product
@@ -146,13 +151,71 @@ class Product(models.Model):
         else:
             # To ensure the slug is really 'slugged' ;)
             base_slug = slugify(self.slug)
-        
+
         slug = base_slug
         counter = 1
         while Product.objects.filter(slug=slug).exists():
             slug = f'{base_slug}-{counter}'
             counter += 1
-        
+
         self.slug = slug
-        
+
         super().save(**kwargs)
+
+
+class Cart(models.Model):
+    """Represents a Shopping cart in the system.
+
+    Attributes:
+        cart_code (str): A unique code for identifying the cart.
+        user (ForeignKey): The user associated with the cart (optional).
+        paid (bool): A flag indicating if the cart has been paid.
+        created_at (datetime): The timestamp when the cart was created.
+        modified (datetime): The timestamp when the cart was last modified.
+    """
+    cart_code = models.CharField(max_length=11, unique=True)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True
+    )
+    paid = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        """
+        Returns a string representation of the cart object.
+
+        Returns:
+            str: A string containing the cart code.
+        """
+        return f'Cart {self.cart_code}'
+
+
+class CartItem(models.Model):
+    """
+    Represents an item in a shopping cart.
+
+    Attributes:
+        cart (ForeignKey): The cart to which this item belongs.
+        product (ForeignKey): The product being added to the cart.
+        quantity (int): The number of units of the product in the cart.
+    """
+    cart = models.ForeignKey(
+        Cart,
+        on_delete=models.CASCADE,
+        related_name='items'
+    )
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    quantity = models.IntegerField(default=1)
+
+    def __str__(self):
+        """
+        Returns a string representation of the cart item.
+
+        Returns:
+            str: It represents the quantity of the product and the cart ID.
+        """
+        return f'{self.quantity} x {self.product.name} in {self.cart.id}'
