@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Category, Product
+from .models import Cart, CartItem, Category, Product
 
 
 @admin.register(Category)
@@ -50,3 +50,11 @@ class ProductAdmin(admin.ModelAdmin):
     list_filter = ['name', 'created_at', 'updated_at']
     list_editable = ['price']
     prepopulated_fields = {'slug': ('name',)}
+
+
+@admin.register(Cart)
+class CartAdmin(admin.ModelAdmin):
+    list_display = ['cart_code', 'user', 'created_at', 'modified']
+
+
+admin.site.register(CartItem)
