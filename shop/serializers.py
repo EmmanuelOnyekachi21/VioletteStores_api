@@ -112,7 +112,7 @@ class CartSerializer(serializers.ModelSerializer):
         fields = ['id', 'cart_code', 'created_at', 'modified']
 
 
-class ClassItemSerializer(serializers.ModelSerializer):
+class CartItemSerializer(serializers.ModelSerializer):
     """
     Serializer for the CartItem model.
 
