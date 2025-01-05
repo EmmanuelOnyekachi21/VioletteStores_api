@@ -108,7 +108,7 @@ def add_item(request):
         # Return an error response in case of an exception
         return Response(str(e), status=400)
 
-
+@api_view(['GET'])
 def product_in_cart(request):
     """
     Check if a product already exists in the cart.
