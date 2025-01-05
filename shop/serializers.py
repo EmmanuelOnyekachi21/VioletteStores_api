@@ -59,3 +59,37 @@ class ProductSerializer(serializers.ModelSerializer):
             'image', 'created_at', 'updated_at'
         ]
         read_only_fields = ['created_at', 'updated_at']
+
+
+class ProductDetailSerializer(serializers.ModelSerializer):
+    """
+    Serializer for each Product detailed page.
+    Includes fields for the product itself,
+    and dynamically generates a list of similar products.
+    """
+    related_products = serializers.SerializerMethodField()
+    category = CategorySerializer(read_only=True)
+
+    class Meta:
+        model = Product
+        fields = [
+            'id', 'name', 'slug', 'description', 'category', 'price',
+            'image', 'related_products'
+        ]
+    def get_related_products(self, product):
+        """
+        Retrieves a list of products in same category as the given product,
+        excluding the product itself. This method is used to populate the
+        `similar_products` field in the serialized output.
+
+        Args:
+            product (Product): The product instance being serialized.
+
+        Returns:
+            list: A list of serialized similar product objects.
+        """
+        products = (Product.objects.filter(
+            category=product.category
+        ).exclude(id=product.id))
+        serializer = ProductSerializer(products, many=True)
+        return serializer.data
