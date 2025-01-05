@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Product, Category
+from .models import Cart, CartItem, Product, Category
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -76,6 +76,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             'id', 'name', 'slug', 'description', 'category', 'price',
             'image', 'related_products'
         ]
+
     def get_related_products(self, product):
         """
         Retrieves a list of products in same category as the given product,
@@ -93,3 +94,44 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         ).exclude(id=product.id))
         serializer = ProductSerializer(products, many=True)
         return serializer.data
+
+
+class CartSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the Cart model.
+
+    This serializer is responsible for converting Cart model instances into
+    JSON and vice versa, including fields for cart ID, code, and timestamps.
+
+    Meta:
+        model (Cart): The model to serialize.
+        fields (list): The list of fields to include in the serialized data.
+    """
+    class Meta:
+        model = Cart
+        fields = ['id', 'cart_code', 'created_at', 'modified']
+
+
+class ClassItemSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the CartItem model.
+
+    It's responsible for converting CartItem model instances into
+    JSON and vice versa. It includes related Cart and Product information.
+
+    Attributes:
+        - cart (CartSerializer): A nested CartSerializer for the related
+        Cart model.
+        - product (ProductSerializer): A nested ProductSerializer for the
+        related Product model.
+
+    Meta:
+        model (CartItem): The model to serialize.
+        fields (list): The list of fields to include in the serialized data.
+    """
+    cart = CartSerializer(read_only=True)
+    product = ProductSerializer(read_only=True)
+
+    class Meta:
+        model = CartItem
+        fields = ['id', 'product', 'cart']
