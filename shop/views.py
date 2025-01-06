@@ -6,7 +6,8 @@ from .serializers import (
     CartItemSerializer,
     CategorySerializer,
     ProductSerializer,
-    ProductDetailSerializer
+    ProductDetailSerializer,
+    SimpleCartSerializer
 )
 from django.shortcuts import get_object_or_404
 # Create your views here.
@@ -106,7 +107,7 @@ def add_item(request):
         )
     except Exception as e:
         # Return an error response in case of an exception
-        return Response(str(e), status=400)
+        return Response({'error': str(e)}, status=400)
 
 @api_view(['GET'])
 def product_in_cart(request):
@@ -132,5 +133,23 @@ def product_in_cart(request):
                 'product_exists': cart_item
             }
         )
+    except Cart.DoesNotExist:
+        return Response({
+            'product_exists': False
+        })
+    except Product.DoesNotExist:
+        return Response({
+            'product_exists': False
+        })
     except Exception as e:
-        return Response(str(e))
+        return Response({'error': str(e)})
+
+
+@api_view(['GET'])
+def get_cart_stat(request):
+    cart_code = request.query_params.get('cart_code')
+    cart = get_object_or_404(Cart, cart_code=cart_code, paid=False)
+    # print(cart)
+
+    serializer = SimpleCartSerializer(cart)
+    return Response(serializer.data)

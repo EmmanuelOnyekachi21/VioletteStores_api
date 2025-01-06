@@ -112,6 +112,35 @@ class CartSerializer(serializers.ModelSerializer):
         fields = ['id', 'cart_code', 'created_at', 'modified']
 
 
+class SimpleCartSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the Cart model that provides a simplified representation.
+
+    Fields:
+        - id: The unique identifier of the cart.
+        - cart_code: The unique code associated with the cart.
+        - number_of_items: The total number of items in the cart,
+        calculated dynamically.
+    """
+    number_of_items = serializers.SerializerMethodField()
+    class Meta:
+        model = Cart
+        fields = ['id', 'cart_code', 'number_of_items']
+
+    def get_number_of_items(self, obj):
+        """
+        Calculate the total number of items in the cart.
+
+        Args:
+            obj (Cart): The cart instance being serialized.
+
+        Returns:
+            int: Total quantity of items in the cart.
+        """
+        cartItems = CartItem.objects.filter(cart=obj)
+        return sum([item.quantity for item in cartItems])
+
+
 class CartItemSerializer(serializers.ModelSerializer):
     """
     Serializer for the CartItem model.
