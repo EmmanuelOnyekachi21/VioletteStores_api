@@ -96,6 +96,35 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         return serializer.data
 
 
+class CartItemSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the CartItem model.
+
+    It's responsible for converting CartItem model instances into
+    JSON and vice versa. It includes related Cart and Product information.
+
+    Attributes:
+        - cart (CartSerializer): A nested CartSerializer for the related
+        Cart model.
+        - product (ProductSerializer): A nested ProductSerializer for the
+        related Product model.
+
+    Meta:
+        model (CartItem): The model to serialize.
+        fields (list): The list of fields to include in the serialized data.
+    """
+    # cart = CartSerializer(read_only=True)
+    product = ProductSerializer(read_only=True)
+    total = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CartItem
+        fields = ['id', 'product', 'total', 'quantity']
+    
+    def get_total(self, obj):
+        return obj.product.price * obj.quantity
+
+
 class CartSerializer(serializers.ModelSerializer):
     """
     Serializer for the Cart model.
@@ -107,9 +136,23 @@ class CartSerializer(serializers.ModelSerializer):
         model (Cart): The model to serialize.
         fields (list): The list of fields to include in the serialized data.
     """
+    items = CartItemSerializer(read_only=True, many=True)
+    sum_total = serializers.SerializerMethodField()
+    num_of_items = serializers.SerializerMethodField()
     class Meta:
         model = Cart
-        fields = ['id', 'cart_code', 'created_at', 'modified']
+        fields = ['id', 'cart_code', 'items', 'sum_total', 'num_of_items', 'created_at', 'modified']
+
+    def get_sum_total(self, obj):
+        """
+        Get the sum total of products.
+        """
+        items = obj.items.all()
+        return sum([item.product.price * item.quantity for item in items])
+    
+    def get_num_of_items(self, obj):
+        items = obj.items.all()
+        return sum([item.quantity for item in items])
 
 
 class SimpleCartSerializer(serializers.ModelSerializer):
@@ -139,28 +182,3 @@ class SimpleCartSerializer(serializers.ModelSerializer):
         """
         cartItems = CartItem.objects.filter(cart=obj)
         return sum([item.quantity for item in cartItems])
-
-
-class CartItemSerializer(serializers.ModelSerializer):
-    """
-    Serializer for the CartItem model.
-
-    It's responsible for converting CartItem model instances into
-    JSON and vice versa. It includes related Cart and Product information.
-
-    Attributes:
-        - cart (CartSerializer): A nested CartSerializer for the related
-        Cart model.
-        - product (ProductSerializer): A nested ProductSerializer for the
-        related Product model.
-
-    Meta:
-        model (CartItem): The model to serialize.
-        fields (list): The list of fields to include in the serialized data.
-    """
-    cart = CartSerializer(read_only=True)
-    product = ProductSerializer(read_only=True)
-
-    class Meta:
-        model = CartItem
-        fields = ['id', 'product', 'cart']

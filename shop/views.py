@@ -4,6 +4,7 @@ from rest_framework.decorators import api_view
 from .models import Cart, CartItem, Product, Category
 from .serializers import (
     CartItemSerializer,
+    CartSerializer,
     CategorySerializer,
     ProductSerializer,
     ProductDetailSerializer,
@@ -152,4 +153,36 @@ def get_cart_stat(request):
     # print(cart)
 
     serializer = SimpleCartSerializer(cart)
+    return Response(serializer.data)
+
+@api_view(['GET'])
+def get_cart(request):
+    """
+    Retrieve a cart by its unique cart code if it has not been paid.
+
+    Args:
+        - request: The HTTP request object. 
+        Expects a 'cart_code' query parameter.
+
+    Returns:
+        Response: A JSON response containing the serialized cart data.
+
+    Raises:
+        Http404: If no unpaid cart with the given cart code exists.
+
+    Example:
+        GET /api/get_cart?cart_code=abc123
+
+        Response:
+        {
+            "id": 1,
+            "cart_code": "abc123",
+            "items": [...],
+            "paid": false,
+            ...
+        }
+    """
+    cart_code = request.query_params.get('cart_code')
+    cart = get_object_or_404(Cart, paid=False, cart_code=cart_code)
+    serializer = CartSerializer(cart)
     return Response(serializer.data)
