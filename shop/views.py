@@ -11,6 +11,7 @@ from .serializers import (
     SimpleCartSerializer
 )
 from django.shortcuts import get_object_or_404
+from rest_framework import status
 # Create your views here.
 
 
@@ -186,3 +187,35 @@ def get_cart(request):
     cart = get_object_or_404(Cart, paid=False, cart_code=cart_code)
     serializer = CartSerializer(cart)
     return Response(serializer.data)
+
+
+@api_view(['PATCH'])
+def update_quantity(request):
+    """
+    API view to allow users update quntity of a cart item.
+    """
+    cartitem_id = request.data.get('item_id')
+    quantity = request.data.get('quantity')
+
+    cartitem = get_object_or_404(CartItem, id=cartitem_id)
+    quantity = int(quantity)
+    cartitem.quantity = quantity
+    cartitem.save()
+    serializer = CartItemSerializer(cartitem)
+    return Response(
+        {
+            'data': serializer.data,
+            'message': "Quantity updated successfully"
+        }
+    )
+
+
+@api_view(['POST'])    
+def delete_item(request):
+    """
+    An API view to delete a cart item.
+    """
+    cart_item_id = request.data.get('item_id')
+    cart_item = get_object_or_404(CartItem, id=cart_item_id)
+    cart_item.delete()
+    return Response({"message": "Item deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
