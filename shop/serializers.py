@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Cart, CartItem, Product, Category
+from django.contrib.auth import get_user_model
 
 
 class CategorySerializer(serializers.ModelSerializer):
