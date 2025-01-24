@@ -28,4 +28,5 @@ urlpatterns = [
     path('update/', views.update_quantity, name='update'),
     path('delete_item/', views.delete_item, name='delete_item'),
     path('get_username/', views.get_username, name='get_username'),
+    path('user_info/', views.user_info, name='user_info'),
 ]

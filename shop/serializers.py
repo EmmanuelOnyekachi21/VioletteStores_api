@@ -183,3 +183,15 @@ class SimpleCartSerializer(serializers.ModelSerializer):
         """
         cartItems = CartItem.objects.filter(cart=obj)
         return sum([item.quantity for item in cartItems])
+
+
+class UserSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the User Model that provides a simplified representation.
+    """
+    class Meta:
+        model = get_user_model()
+        fields = [
+            "id", "username", "email", 'first_name', 'last_name',
+            'city', 'state', 'address', 'phone'
+        ]

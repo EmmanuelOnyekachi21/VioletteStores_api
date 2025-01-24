@@ -8,7 +8,8 @@ from .serializers import (
     CategorySerializer,
     ProductSerializer,
     ProductDetailSerializer,
-    SimpleCartSerializer
+    SimpleCartSerializer,
+    UserSerializer
 )
 from django.shortcuts import get_object_or_404
 from rest_framework import status
@@ -230,3 +231,16 @@ def get_username(request):
     """
     username = request.user
     return Response({'username': username.username})
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def user_info(request):
+    """
+    Get User Info
+    """
+    user = request.user
+    seriaizer = UserSerializer(user)
+    return Response(
+        seriaizer.data
+    )
