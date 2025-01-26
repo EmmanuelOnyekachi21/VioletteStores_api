@@ -167,3 +167,5 @@ AUTH_PASSWORD_VALIDATORS = [
         "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
+
+FLUTTERWAVE_SECRET_KEY = "FLWSECK_TEST-cff973c479e2344ce6da8cdc10b98574-X"

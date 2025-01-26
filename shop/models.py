@@ -219,3 +219,33 @@ class CartItem(models.Model):
             str: It represents the quantity of the product and the cart ID.
         """
         return f'{self.quantity} x {self.product.name} in {self.cart.id}'
+
+
+class Transaction(models.Model):
+    """
+    Represents a transaction record in the system.
+
+    Attributes:
+        ref (str): Unique reference code for the transaction.
+        cart (ForeignKey): The cart associated with the transaction.
+        amount (Decimal): The total amount for the transaction.
+        currency (str): The currency for the transaction (default is 'NGN').
+        status (str): The status of the transaction (default is 'pending').
+        user (ForeignKey): The user who made the transaction (optional).
+        created_at (DateTimeField): The timestamp when the transaction was created.
+        modified_at (DateTimeField): The timestamp when the transaction was last modified.
+    """
+    ref = models.CharField(unique=True, max_length=255)
+    cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='transcations')
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    currency = models.CharField(max_length=10, default='NGN')
+    status = models.CharField(max_length=20, default='pending')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    modified_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        """
+        String representation of the Transaction object, displaying the reference and status.
+        """
+        return f"Transaction {self.ref} - {self.status}"

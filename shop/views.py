@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
-from .models import Cart, CartItem, Product, Category
+from .models import Cart, CartItem, Product, Category, Transaction
 from .serializers import (
     CartItemSerializer,
     CartSerializer,
@@ -14,6 +14,11 @@ from .serializers import (
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
+import uuid
+from decimal import Decimal
+BASE_URL = "http://localhost:5173"
+from django.conf import settings
+import requests
 # Create your views here.
 
 
@@ -244,3 +249,185 @@ def user_info(request):
     return Response(
         seriaizer.data
     )
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def initiate_payment(request):
+    """
+    Initiates a payment through Flutterwave's API.
+
+    This view processes the payment initiation request, creates a new transaction 
+    record, and sends a request to Flutterwave's API for payment processing.
+
+    Args:
+        request: The HTTP request object containing the cart_code and user info.
+
+    Returns:
+        Response: The response object with the payment initiation result.
+    """
+    if request.user:
+        try:
+            tx_ref = str(uuid.uuid4())
+            cart_code = request.data.get("cart_code")
+            cart = Cart.objects.get(cart_code=cart_code)
+            user = request.user
+            
+            amount = sum([item.quantity * item.product.price for item in cart.items.all()])
+            tax = Decimal('4.00')
+            total_amount = amount + tax
+            currency = "NGN"
+            
+            redirect_url = f"{BASE_URL}/payment-status/"
+            
+            transaction = Transaction.objects.create(
+                ref=tx_ref,
+                cart=cart,
+                amount = total_amount,
+                currency=currency,
+                user=user,
+                status='pending'                
+            )
+            
+            flutter_wave_payload = {
+                "tx_ref": tx_ref,
+                'amount': str(total_amount),
+                'currency': currency,
+                'redirect_url': redirect_url,
+                'customer': {
+                    'email': user.email,
+                    'name': user.username,
+                    'phone number': user.phone,
+                },
+                'configurations': {
+                  "session_duration": 5,
+                  "max_retry_attempt": 3,
+                },
+                'customization': {
+                    'title': 'VioletteStores Payment'
+                }
+            }
+            
+            # Set up the headers for the request.
+            headers = {
+                "Authorization": f"Bearer {settings.FLUTTERWAVE_SECRET_KEY}",
+                'Content-Type': 'application/json'
+            }
+            
+            # Make the API request to flutterwave
+            response = requests.post(
+                'https://api.flutterwave.com/v3/payments',
+                json=flutter_wave_payload,
+                headers=headers
+            )
+            
+            # Check if response was succesful.
+            if response.status_code == 200:
+                return Response(
+                    response.json(),
+                    status=status.HTTP_200_OK
+                )
+            else:
+                return Response(
+                    response.json(),
+                    status=response.status_code
+                )
+        except requests.exceptions.RequestException as e:
+            # Log the error and return an error response
+            return Response(
+                {
+                    'error': str(e)
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+@api_view(['POST'])
+def payment_callback(request):
+    """
+    Handles the callback from Flutterwave after a payment is processed.
+
+    This view verifies the payment status by calling Flutterwave's API to ensure
+    the transaction was successful and updates the transaction and cart status accordingly.
+
+    Args:
+        request: The HTTP request object containing payment status and transaction ID.
+
+    Returns:
+        Response: The response object with the result of payment verification.
+    """
+    status = request.GET.get("status")
+    tx_ref = request.GET.get("tx_ref")
+    transaction_id = request.GET.get("transaction_id")
+
+    user = request.user
+    
+    if status == 'successful':
+        # Verify the transaction USING FLUTTERWAVE API
+        headers = {
+            "Authorization": f"Bearer {settings.FLUTTERWAVE_SECRET_KEY}"
+        }
+        
+        response = requests.get(
+            f'https://api.flutterwave.com/v3/transactions/{transaction_id}/verify',
+            headers=headers
+        )
+        response_data = response.json()
+
+        if response_data['status'] == 'success':
+            transaction = Transaction.objects.get(ref=tx_ref)
+
+            # Confirm the transaction details
+            if (
+                response_data['data']['status'] == 'successful' and
+                float(response_data['data']['amount'] == float(transaction.amount)) and
+                response_data['data']['currency'] == transaction.currency
+                ):
+                # Update transaction and cart status to paid
+                transaction.status = 'completed'
+                transaction.save()
+                
+                cart = transaction.cart
+                cart.paid = True
+                cart.user = user
+                cart.save()
+                
+                return Response(
+                    {
+                        'message': 'Payment Successful!',
+                        'subMessage': (
+                            'You have successfully made payment for '
+                            'the items you purchased 😍'
+                        )
+                    }
+                )
+            else:
+                # Payment verification failed
+                return Response(
+                    {
+                        'message': 'Payment Verification Failed',
+                        "subMessage": "Your payment verification failed, kindly try again."
+                    },
+                    status=400
+                )
+        else:
+            return Response(
+                {
+                    'message': (
+                        'Failed to verify transaction with Flutterwave.'
+                    ),
+                    'subMessage': (
+                        'We couldn\'t verify your payment, '
+                        'use a different payment method'
+                    )
+                },
+                status=400
+            )
+    else:
+        # Payment was not successful
+        return Response(
+            {
+                'message': 'Payment was not successful.'
+            },
+            status=400
+        )
