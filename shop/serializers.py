@@ -185,13 +185,53 @@ class SimpleCartSerializer(serializers.ModelSerializer):
         return sum([item.quantity for item in cartItems])
 
 
+class NewCartItemSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the CartItem model that provides a simplified representation
+    of a cart item, including product details and associated order information.
+    """
+    product = ProductSerializer(read_only=True)
+    order_id = serializers.SerializerMethodField()
+    order_date = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CartItem
+        fields = [
+            'id', 'product', 'quantity', 'order_id', 'order_date'
+        ]
+    
+    def get_order_id(self, cart_item):
+        """
+        Returns the order ID associated with the CartItem.
+        """
+        order_id = cart_item.cart.cart_code
+        return order_id
+    
+    def get_order_date(self, cart_item):
+        """
+        Returns the order date when the CartItem was last modified.
+        """
+        order_date = cart_item.cart.modified
+        return order_date
+
+
 class UserSerializer(serializers.ModelSerializer):
     """
-    Serializer for the User Model that provides a simplified representation.
+    Serializer for the User model that provides a simplified representation of the user,
+    including personal details and a list of their paid cart items.
     """
+    items = serializers.SerializerMethodField()
     class Meta:
         model = get_user_model()
         fields = [
             "id", "username", "email", 'first_name', 'last_name',
-            'city', 'state', 'address', 'phone'
+            'city', 'state', 'address', 'phone', 'items'
         ]
+    
+    def get_items(self, user):
+        """
+        Retrieves a list of cart items that are associated with the user and have been paid.
+        """
+        cart_items = CartItem.objects.filter(cart__user=user, cart__paid=True)
+        serializers = NewCartItemSerializer(cart_items, many=True)
+        return serializers.data
