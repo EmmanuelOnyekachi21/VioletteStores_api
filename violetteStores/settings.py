@@ -31,7 +31,7 @@ SECRET_KEY = 'django-insecure-*cg30hqtvq-^1_4@pcc9i%*64xt+18#vd7m9mpgaazw8%%19=4
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["violettestores-api.onrender.com", "localhost", "127.0.0.1"]
 
 
 # Application definition
