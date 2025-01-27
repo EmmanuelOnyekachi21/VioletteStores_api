@@ -33,11 +33,16 @@ def categories(request):
 
 
 @api_view(['GET'])
-def products(request):
+def products(request, category_slug=None):
     """
     API VIEW TO VIEW ALL PRODUCTS
     """
-    products = Product.objects.all()
+    if category_slug:
+        category = Category.objects.get(slug=category_slug)
+        products = Product.objects.filter(category=category)
+    else:
+        products = Product.objects.all()
+
     serializer = ProductSerializer(products, many=True)
     return Response(serializer.data)
 
