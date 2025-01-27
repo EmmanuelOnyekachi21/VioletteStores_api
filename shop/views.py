@@ -16,7 +16,7 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 import uuid
 from decimal import Decimal
-BASE_URL = "http://localhost:5173"
+BASE_URL = settings.REACT_BASE_URL
 from django.conf import settings
 import requests
 # Create your views here.
